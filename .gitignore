@@ -248,3 +248,6 @@ ModelManifest.xml
 !**/out/**/QMIC_SDK.dll
 !**/out/**/QMIC_SDK.lib
 !**/out/**/QMIC.bit
+
+# keep Opal Kelly installer folder
+!**/misc/**
