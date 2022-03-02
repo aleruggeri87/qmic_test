@@ -33,6 +33,8 @@ int main() {
 	QMIC_Status stat;
 	uint32_t aval_events;
 	QMIC_AnalogAcq analog_acq;
+	float sw_ver, fw_ver;
+	uint32_t FLhist[256];
 
 	uint32_t *data_buf;
 	FILE *camera_data_file;
@@ -95,6 +97,10 @@ int main() {
 
 	stat = QMIC_Constr(&q, ""); //< open the first available camera
 	CHECK_ERR_EXIT(stat, "QMIC_Constr");
+
+	stat = QMIC_GetVersion(q, &sw_ver, &fw_ver, NULL, NULL); //< get sw & fw versions
+	CHECK_ERR_EXIT(stat, "QMIC_GetVersion");
+	printf("sw. ver: %4.2f - fw. ver: %4.2f\n", sw_ver, fw_ver);
 
 	stat = QMIC_GetAnalogAcq(q, &analog_acq); //< get some data from the telemetry sensors
 	CHECK_ERR_EXIT(stat, "QMIC_GetAnalogAcq");
@@ -163,6 +169,13 @@ int main() {
 		clear_last_N_chars(last_chars);
 		last_chars = printf("done.              \n");
 	}
+
+	stat = QMIC_GetFrameLenHistogram(q, FLhist, NULL);   //< get distribution of frame length of the
+	CHECK_ERR_ESCAPE(stat, "QMIC_GetFrameLenHistogram"); //  last 100 ms acquisition time
+
+	stat = QMIC_HelpPrintFrameLenStats(FLhist, NULL); //< display the frame length distribution stats
+	CHECK_ERR_ESCAPE(stat, "QMIC_HelpPrintFrameLenStats");
+
 
 escape: //< jump to here on error after successful initialization. This allow to properly turn-off
 	    //  and deallocate the QMIC object
