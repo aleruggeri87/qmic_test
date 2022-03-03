@@ -12,6 +12,7 @@
 
 // Support functions and macro definitions ---------------------------------------------------------
 void clear_last_N_chars(int n_chars);
+QMIC_Status enable_raw_mode(QMIC_H q); //< enable raw data output
 
 #define CHECK_ERR_EXIT(x, y) {if(QMIC_HelpPrintErrorCode(x, y, NULL)){return -1;}}
 #define CHECK_ERR_ESCAPE(x, y) {if(QMIC_HelpPrintErrorCode(x, y, NULL)){goto escape;}}
@@ -35,6 +36,7 @@ int main() {
 	QMIC_AnalogAcq analog_acq;
 	float sw_ver, fw_ver;
 	uint32_t FLhist[256];
+	uint32_t len_dec_data;
 
 	uint32_t *data_buf;
 	FILE *camera_data_file;
@@ -117,6 +119,8 @@ int main() {
 #endif
 	CHECK_ERR_ESCAPE(stat, "QMIC_SetBadPixels");
 
+	stat = enable_raw_mode(q); //< enable raw data out
+	CHECK_ERR_ESCAPE(stat, "enable_raw_mode");
 
 	// === Acquisition ===
 	printf("Acquiring Data (press 'q' to abort)\n");
@@ -155,15 +159,15 @@ int main() {
 #if DECODE_DATA
 		clear_last_N_chars(last_chars);
 		last_chars = printf("processing data");
-		stat = QMIC_HelpDecodeData64(data_buf, N_EVENTS, ts, addr, last_ts);
-		CHECK_ERR_ESCAPE(stat, "QMIC_HelpDecodeData64");
+		stat = QMIC_HelpDecodeRawData64(data_buf, N_EVENTS, ts, addr, last_ts, &len_dec_data);
+		CHECK_ERR_ESCAPE(stat, "QMIC_HelpDecodeRawData64");
 		last_ts = ts[N_EVENTS - 1]; //< keep last timestamp for the next decoding
 #endif
 #if SAVE_DECODED_DATA && DECODE_DATA
 		clear_last_N_chars(last_chars);
 		last_chars = printf("saving decoded data");
-		fwrite(ts, sizeof(uint64_t), N_EVENTS, decoded_ts_file);
-		fwrite(addr, sizeof(uint16_t), N_EVENTS, decoded_addr_file);
+		fwrite(ts, sizeof(uint64_t), len_dec_data, decoded_ts_file);
+		fwrite(addr, sizeof(uint16_t), len_dec_data, decoded_addr_file);
 #endif
 
 		clear_last_N_chars(last_chars);
@@ -210,4 +214,15 @@ void clear_last_N_chars(int n_chars) {
 	for(int k = 0; k < n_chars; k++) {
 		printf("\b");
 	}
+}
+
+QMIC_Status enable_raw_mode(QMIC_H q) {
+	QMIC_adv_settings as;
+	QMIC_Status stat;
+
+	stat = QMIC_GetAdvancedSettings(q, &as); //< get curent advanced settings
+	if(stat) return stat;
+	as.enable_raw_mode = TRUE; //< change raw mode flag
+	stat = QMIC_SetAdvancedSettings(q, as); //< set back values with changed flag
+	return stat;
 }
