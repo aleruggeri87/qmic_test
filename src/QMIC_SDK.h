@@ -228,6 +228,8 @@ extern "C" {
 	 * ********************************************************************************************/
 
 	/** Decode each camera data event to pixel numbers and timestamps (64-bit version).
+	 * The user must preallocate a len * sizeof(uint64_t) memory space for timestamps parameter.
+	 * The user must preallocate a len * sizeof(uint16_t) memory space for pixel_number parameter.
 	 * /param data            pointer to the input camera data.
 	 * /param len             length of the data (in words).
 	 * /param timestamps      output timestamp of each event. Base unit is 2 ns. Will overflow after
@@ -238,6 +240,29 @@ extern "C" {
 	 *                        increasing values                                                   */
 	DLL_PUBLIC QMIC_Status QMIC_HelpDecodeData64(uint32_t *data, uint32_t len, uint64_t *timestamps,
 	                                             uint16_t *pixel_number, uint64_t base_timestamp);
+
+	/** Decode raw camera data events to pixel numbers and timestamps (64-bit version).
+	 * The user must preallocate a len * sizeof(uint64_t) memory space for timestamps parameter.
+	 * The user must preallocate a len * sizeof(uint16_t) memory space for pixel_number parameter.
+	 * The correct size of these output arrays (always < len) is returned by the len_out parameter.
+	 * /param data            pointer to the input raw camera data.
+	 * /param len             length of the data (in words).
+	 * /param timestamps      output timestamp of each event. Base unit is 2 ns. Please note that:
+	 *                        - this array is NOT sorted as in QMIC_HelpDecodeData64().
+	 *                        - these values does not represent the correct absolute time-of-arrival
+	 *                          of the detected events.
+	 *                        - if the upper bits are identical between two timestamps, last 8-bits
+	 *                          can be compared to determine which one has been detected first.
+	 *                        - if two timestamps are identical, it is guaranteed that the two are
+	 *                          a coincidence event.
+	 * /param pixel_number    address of the clicked pixel that produced the event.
+	 * /param base_timestamp  input value that will offset all the resulting timestamps. Last
+	 *                        timestamp from previous function call can be used to produce always
+	 *                        increasing values.
+	 * /param len_out         length of timestamps and pixel_number arrays.                       */
+	DLL_PUBLIC QMIC_Status QMIC_HelpDecodeRawData64(uint32_t *data, uint32_t len, 
+		                                            uint64_t *timestamps, uint16_t *pixel_number, 
+		                                            uint64_t base_timestamp, uint32_t *len_out);
 
 	/** Print statistics about the lehgth of the camera frames.
 	 * /param histogram   input histogram array, as returned by QMIC_GetFrameLenHistogram
