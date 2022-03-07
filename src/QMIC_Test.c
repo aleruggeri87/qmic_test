@@ -20,6 +20,7 @@ void clear_last_N_chars(int n_chars);
 #define N_EVENTS              512*10000 //< how many events to wait; must be a multiple of 256!
 #define N_REPETITIONS         5 //< how many times repeat the acquisiton of N_EVENTS
 #define DECODE_DATA           1 //< set to 1 to activate data decoding
+#define SAVE_CAMERA_DATA      0 //< set to 1 to save camera data to file
 #define SAVE_DECODED_DATA     1 //< set to 1 to save decoded data to file
 #define DEACTIVATE_BAD_PIXELS 1 //< set to 1 to deactivate the specified "bad" pixels on-chip
 #define BAD_PIX_LEN          17 //< number of bad pixels in the list below
@@ -37,7 +38,9 @@ int main() {
 	uint32_t FLhist[256];
 
 	uint32_t *data_buf;
+#if SAVE_CAMERA_DATA
 	FILE *camera_data_file;
+#endif
 
 #if DECODE_DATA
 	uint64_t *ts;
@@ -62,23 +65,25 @@ int main() {
 	}
 #if DECODE_DATA
 	ts = (uint64_t*)calloc(N_EVENTS, sizeof(uint64_t));
-	if(data_buf == NULL) {
+	if(ts == NULL) {
 		printf("(ERROR) QMIC_Test.c: ts calloc error.\n");
 		goto escape;
 	}
 	addr = (uint16_t*)calloc(N_EVENTS, sizeof(uint16_t));
-	if(data_buf == NULL) {
+	if(addr == NULL) {
 		printf("(ERROR) QMIC_Test.c: addr calloc error.\n");
 		goto escape;
 	}
 #endif
 
 	// === Open output files ===
+#if SAVE_CAMERA_DATA
 	camera_data_file = fopen("data_out.dat", "wb");
 	if(camera_data_file == NULL) {
 		printf("(ERROR) QMIC_Test.c: data_out.dat fopen error.\n");
 		goto escape;
 	}
+#endif
 #if SAVE_DECODED_DATA && DECODE_DATA
 	decoded_ts_file = fopen("decoded_ts_out.dat", "wb");
 	if(decoded_ts_file == NULL) {
@@ -148,9 +153,11 @@ int main() {
 		stat = QMIC_GetData(q, data_buf, N_EVENTS); //< download N_EVENTS from camera to the PC
 		CHECK_ERR_ESCAPE(stat, "QMIC_GetData");
 
+#if SAVE_CAMERA_DATA
 		clear_last_N_chars(last_chars);
 		last_chars = printf("saving data ");
 		fwrite(data_buf, sizeof(uint32_t), N_EVENTS, camera_data_file); //< save camera data to file
+#endif
 
 #if DECODE_DATA
 		clear_last_N_chars(last_chars);
@@ -191,7 +198,13 @@ escape: //< jump to here on error after successful initialization. This allow to
 	// === Deallocate dynamic memory ===
 	free(data_buf);
 	data_buf = NULL;
+#if SAVE_CAMERA_DATA
 	fclose(camera_data_file);
+#endif
+#if SAVE_DECODED_DATA && DECODE_DATA
+	fclose(decoded_ts_file);
+	fclose(decoded_addr_file);
+#endif
 #if DECODE_DATA
 	free(ts);
 	ts = NULL;
