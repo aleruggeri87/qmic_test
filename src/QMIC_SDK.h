@@ -217,6 +217,22 @@ extern "C" {
 	 *              of 256.                                                                       */
 	DLL_PUBLIC QMIC_Status QMIC_GetData(QMIC_H qmic, uint32_t *data, uint32_t len);
 
+	/** Download data and return an intensity image.
+	* The user must preallocate a QMIC_NPIXELS * sizeof(uint32_t) memory space for the image.
+	* This function will:
+	* i)   start the acquisition; 
+	* ii)  download data from the camera;
+	* iii) parse the received data;
+	* iv)  stop the acquisition when the specified exposure time is elapsed;
+	* v)   build an intensity image, using data exactly from the specified exposure time;
+	* vi)  sum the intensity image to the user-provided input buffer.
+	* /param qmic      QMIC handle.
+	* /param image     pointer to user-allocated memory space (at least len * QMIC_NPIXELS(uint32_t)
+	*                  bytes). The function will write the intensity image in this buffer. If the
+	*                  input buffer is not empty, new data will be summed up to the previous one.
+	* /param exp_time  exposure time for the intensity image. Time is expressed in seconds.       */
+	DLL_PUBLIC QMIC_Status QMIC_GetIntensityImage(QMIC_H qmic, uint32_t *image, double exp_time);
+
 	/** Flush all the data from FPGA RAM.
 	 * /param qmic  QMIC handle.                                                                  */
 	DLL_PUBLIC QMIC_Status QMIC_FlushData(QMIC_H qmic);
@@ -264,7 +280,7 @@ extern "C" {
 		                                            uint64_t *timestamps, uint16_t *pixel_number, 
 		                                            uint64_t base_timestamp, uint32_t *len_out);
 
-	/** Print statistics about the lehgth of the camera frames.
+	/** Print statistics about the length of the camera frames.
 	 * /param histogram   input histogram array, as returned by QMIC_GetFrameLenHistogram
 	 * /param string_out  string where the function will write the text output. Preallocate at least
 	 *                    1024 bytes. Alternatively, set to NULL and the function will write to the
