@@ -234,6 +234,7 @@ extern "C" {
 	DLL_PUBLIC QMIC_Status QMIC_GetIntensityImage(QMIC_H qmic, uint32_t *image, double exp_time);
 
 	/** Flush all the data from FPGA RAM.
+	 * Call this function only when the acquisition is not running.
 	 * /param qmic  QMIC handle.                                                                  */
 	DLL_PUBLIC QMIC_Status QMIC_FlushData(QMIC_H qmic);
 
@@ -244,21 +245,35 @@ extern "C" {
 	 * ********************************************************************************************/
 
 	/** Decode each camera data event to pixel numbers and timestamps (64-bit version).
-	 * The user must preallocate a len * sizeof(uint64_t) memory space for timestamps parameter.
+	 * The user must preallocate a len * sizeof(int64_t) memory space for timestamps parameter.
 	 * The user must preallocate a len * sizeof(uint16_t) memory space for pixel_number parameter.
 	 * /param data            pointer to the input camera data.
 	 * /param len             length of the data (in words).
 	 * /param timestamps      output timestamp of each event. Base unit is 2 ns. Will overflow after
-	 *                        about 1200 years (LOL).
+	 *                        about 600 years.
 	 * /param pixel_number    address of the clicked pixel that produced the event
 	 * /param base_timestamp  input value that will offset all the resulting timestamps. Last
 	 *                        timestamp from previous function call can be used to produce always
 	 *                        increasing values                                                   */
-	DLL_PUBLIC QMIC_Status QMIC_HelpDecodeData64(uint32_t *data, uint32_t len, uint64_t *timestamps,
-	                                             uint16_t *pixel_number, uint64_t base_timestamp);
+	DLL_PUBLIC QMIC_Status QMIC_HelpDecodeData64(uint32_t *data, uint32_t len, int64_t *timestamps,
+	                                             uint16_t *pixel_number, int64_t base_timestamp);
+
+	/** Decode each camera data event to pixel numbers and timestamps (32-bit version).
+	* The user must preallocate a len * sizeof(int32_t) memory space for timestamps parameter.
+	* The user must preallocate a len * sizeof(uint16_t) memory space for pixel_number parameter.
+	* /param data            pointer to the input camera data.
+	* /param len             length of the data (in words).
+	* /param timestamps      output timestamp of each event. Base unit is 2 ns. Will overflow after
+	*                        about 4 seconds.
+	* /param pixel_number    address of the clicked pixel that produced the event
+	* /param base_timestamp  input value that will offset all the resulting timestamps. Last
+	*                        timestamp from previous function call can be used to produce always
+	*                        increasing values                                                   */
+	DLL_PUBLIC QMIC_Status QMIC_HelpDecodeData32(uint32_t *data, uint32_t len, int32_t *timestamps,
+		                                         uint16_t *pixel_number, int32_t base_timestamp);
 
 	/** Decode raw camera data events to pixel numbers and timestamps (64-bit version).
-	 * The user must preallocate a len * sizeof(uint64_t) memory space for timestamps parameter.
+	 * The user must preallocate a len * sizeof(int64_t) memory space for timestamps parameter.
 	 * The user must preallocate a len * sizeof(uint16_t) memory space for pixel_number parameter.
 	 * The correct size of these output arrays (always < len) is returned by the len_out parameter.
 	 * /param data            pointer to the input raw camera data.
@@ -277,8 +292,8 @@ extern "C" {
 	 *                        increasing values.
 	 * /param len_out         length of timestamps and pixel_number arrays.                       */
 	DLL_PUBLIC QMIC_Status QMIC_HelpDecodeRawData64(uint32_t *data, uint32_t len, 
-		                                            uint64_t *timestamps, uint16_t *pixel_number, 
-		                                            uint64_t base_timestamp, uint32_t *len_out);
+		                                            int64_t *timestamps, uint16_t *pixel_number, 
+		                                            int64_t base_timestamp, uint32_t *len_out);
 
 	/** Print statistics about the length of the camera frames.
 	 * /param histogram   input histogram array, as returned by QMIC_GetFrameLenHistogram

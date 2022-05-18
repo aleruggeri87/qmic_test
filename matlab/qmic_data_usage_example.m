@@ -5,7 +5,7 @@ base_path='..\';
 fid_ts=fopen([base_path 'decoded_ts_out.dat'],'rb');
 fid_addr=fopen([base_path 'decoded_addr_out.dat'],'rb');
 
-ts=fread(fid_ts, inf,'*uint64');
+ts=fread(fid_ts, inf,'*int64');
 addr=fread(fid_addr, inf,'*uint16');
 
 fclose(fid_ts);

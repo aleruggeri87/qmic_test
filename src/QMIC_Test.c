@@ -26,7 +26,7 @@ void draw_map(uint32_t *frame, uint8_t first_line);
 #define LIVE_TIME             100 // live image integration time (ms)
 #else
 #define N_EVENTS              512*10000 //< how many events to wait; must be a multiple of 256!
-#define N_REPETITIONS         5 //< how many times repeat the acquisiton of N_EVENTS
+#define N_REPETITIONS         5 //< how many times repeat the acquisition of N_EVENTS
 #define DECODE_DATA           1 //< set to 1 to activate data decoding
 #define SAVE_CAMERA_DATA      0 //< set to 1 to save camera data to file
 #define SAVE_DECODED_DATA     1 //< set to 1 to save decoded data to file
@@ -56,9 +56,9 @@ int main() {
 #endif
 
 #if DECODE_DATA
-	uint64_t *ts;
+	int64_t *ts;
 	uint16_t *addr;
-	uint64_t last_ts = 0;
+	int64_t last_ts = 0;
 #endif
 #if SAVE_DECODED_DATA && DECODE_DATA
 	FILE *decoded_ts_file;
@@ -85,7 +85,7 @@ int main() {
 	}
 #endif
 #if DECODE_DATA
-	ts = (uint64_t*)calloc(N_EVENTS, sizeof(uint64_t));
+	ts = (int64_t*)calloc(N_EVENTS, sizeof(int64_t));
 	if(ts == NULL) {
 		printf("(ERROR) QMIC_Test.c: ts calloc error.\n");
 		goto escape;
@@ -211,7 +211,7 @@ int main() {
 #if SAVE_DECODED_DATA && DECODE_DATA
 		clear_last_N_chars(last_chars);
 		last_chars = printf("saving decoded data");
-		fwrite(ts, sizeof(uint64_t), N_EVENTS, decoded_ts_file);
+		fwrite(ts, sizeof(int64_t), N_EVENTS, decoded_ts_file);
 		fwrite(addr, sizeof(uint16_t), N_EVENTS, decoded_addr_file);
 #endif
 

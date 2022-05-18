@@ -4,7 +4,7 @@ base_path='..\';
 fid_ts=fopen([base_path 'decoded_ts_out.dat'],'rb');
 fid_addr=fopen([base_path 'decoded_addr_out.dat'],'rb');
 
-ts=fread(fid_ts, inf,'*uint64');
+ts=fread(fid_ts, inf,'*int64');
 addr=fread(fid_addr, inf,'*uint16');
 
 fclose(fid_ts);
@@ -23,7 +23,7 @@ colorbar
 aggressor=176;
 
 tdc_val=int16(bitand(ts,255));    % lower 8-bits. Convert these to signed ints
-upper_val=int64(bitshift(ts,-8)); % since ts is unsorted and diff can produce
+upper_val=bitshift(ts,-8); % since ts is unsorted and diff can produce
 i=find(diff(upper_val)==0);       % negative numbers!
 % i contain indexes of potential correlation events, since they have the
 % upper part of the timestamp equal
