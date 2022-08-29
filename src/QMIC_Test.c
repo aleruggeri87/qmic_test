@@ -21,7 +21,7 @@ void draw_map(uint32_t *frame, uint8_t first_line);
 #define CHECK_ERR_ESCAPE(x, y) {if(QMIC_HelpPrintErrorCode(x, y, NULL)){goto escape;}}
 
 // User defined settings ---------------------------------------------------------------------------
-#define SHOW_LIVE             1 //< 0: save data to file; 1: show live intensity image
+#define SHOW_LIVE             0 //< 0: save data to file; 1: show live intensity image
 #if SHOW_LIVE
 #define LIVE_TIME             100 // live image integration time (ms)
 #else
@@ -31,6 +31,7 @@ void draw_map(uint32_t *frame, uint8_t first_line);
 #define SAVE_CAMERA_DATA      0 //< set to 1 to save camera data to file
 #define SAVE_DECODED_DATA     1 //< set to 1 to save decoded data to file
 #endif
+#define WARMUP_TIME          10 //< time (s) to wait before acquiring "real" data; set to 0 to disable.
 #define DEACTIVATE_BAD_PIXELS 1 //< set to 1 to deactivate the specified "bad" pixels on-chip
 #define BAD_PIX_LEN          17 //< number of bad pixels in the list below
 uint16_t bad_pix_list[BAD_PIX_LEN] = {6, 34, 53, 66, 70, 104, 196, 219, 249, 268, 303, 343, 351,
@@ -143,6 +144,18 @@ int main() {
 #endif
 	CHECK_ERR_ESCAPE(stat, "QMIC_SetBadPixels");
 
+	// === Camera Warm-up ===
+	if(WARMUP_TIME) {
+		printf("Warming up... ");
+		stat = QMIC_Start(q); //< start the acquisition; events will accumulate in the camera memory
+		CHECK_ERR_ESCAPE(stat, "QMIC_Start");
+
+		Sleep(WARMUP_TIME * 1000);
+
+		stat = QMIC_Stop(q); //< stop acquisition; no additional events will be put in the camera memory
+		CHECK_ERR_ESCAPE(stat, "QMIC_Stop");
+		printf("Done!\n");
+	}
 
 	// === Acquisition ===
 	stat = QMIC_FlushData(q); //< discard all the data on the camera memory (if any)
