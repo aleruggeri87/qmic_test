@@ -31,6 +31,7 @@ void draw_map(uint32_t *frame, uint8_t first_line);
 #define SAVE_CAMERA_DATA      0 //< set to 1 to save camera data to file
 #define SAVE_DECODED_DATA     1 //< set to 1 to save decoded data to file
 #endif
+#define READOUT_TIME       1000 //< readout time (4 ns per unit); set to 0 for adaptive readout.
 #define WARMUP_TIME          10 //< time (s) to wait before acquiring "real" data; set to 0 to disable.
 #define DEACTIVATE_BAD_PIXELS 1 //< set to 1 to deactivate the specified "bad" pixels on-chip
 #define BAD_PIX_LEN          17 //< number of bad pixels in the list below
@@ -133,9 +134,14 @@ int main() {
 	CHECK_ERR_ESCAPE(stat, "QMIC_GetAnalogAcq");
 	printf("Sensor Temperature: %.1f*C\n", analog_acq.Tcarrier);
 
-	// === Load Default Configuration and Bad Pixels Map ===
+	// === Load Default Configuration, readout time and Bad Pixels Map ===
 	stat = QMIC_SetDefaultSettings(q); //< load suggested settings for the test
 	CHECK_ERR_ESCAPE(stat, "QMIC_SetDefaultSettings");
+
+	QMIC_adv_settings as;
+	QMIC_GetAdvancedSettings(q, &as); //< get current settings
+	as.readout_time = READOUT_TIME;   //< set new readout time
+	QMIC_SetAdvancedSettings(q, as);  //< apply settings
 
 #if DEACTIVATE_BAD_PIXELS
 	stat = QMIC_SetBadPixels(q, bad_pix_list, BAD_PIX_LEN); //< turn off pixels
