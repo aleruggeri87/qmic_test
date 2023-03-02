@@ -77,7 +77,7 @@ extern "C" {
 		uint8_t pos_gate1;
 		uint8_t pos_gate;
 		uint8_t gate_len;
-		uint16_t max_readout_time;
+		uint16_t readout_time;
 		QBOOL wait_gate_end;
 		QBOOL unwrap_frame_len_hist;
 	} QMIC_adv_settings;
@@ -161,7 +161,7 @@ extern "C" {
 
 	/** Get the current set Advanced camera parameters
 	 * The user must preallocate a 1 x sizeof(QMIC_adv_settings) memory space for the as parameter.
-	 * This function is useful to retreive the current settings, modify only one parameter and than
+	 * This function is useful to retrieve the current settings, modify only one parameter and than
 	 * call QMIC_SetAdvancedSettings to update the values.
 	 * /param qmic  QMIC handle.
 	 * /param as    advanced settings output struct.                                              */
@@ -294,6 +294,11 @@ extern "C" {
 	DLL_PUBLIC QMIC_Status QMIC_HelpDecodeRawData64(uint32_t *data, uint32_t len, 
 		                                            int64_t *timestamps, uint16_t *pixel_number, 
 		                                            int64_t base_timestamp, uint32_t *len_out);
+
+	/** Get the actual camera frame rate.
+	* /param histogram   input histogram array, as returned by QMIC_GetFrameLenHistogram
+	* /param frame_rate  pointer to a float value, which will contains the actual rate in fps.    */
+	DLL_PUBLIC QMIC_Status QMIC_HelpActualFrameRate(uint32_t *histogram, float* frame_rate);
 
 	/** Print statistics about the length of the camera frames.
 	 * /param histogram   input histogram array, as returned by QMIC_GetFrameLenHistogram
