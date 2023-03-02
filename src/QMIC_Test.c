@@ -21,7 +21,7 @@ void draw_map(uint32_t *frame, uint8_t first_line);
 #define CHECK_ERR_ESCAPE(x, y) {if(QMIC_HelpPrintErrorCode(x, y, NULL)){goto escape;}}
 
 // User defined settings ---------------------------------------------------------------------------
-#define SHOW_LIVE             0 //< 0: save data to file; 1: show live intensity image
+#define SHOW_LIVE             1 //< 0: save data to file; 1: show live intensity image
 #if SHOW_LIVE
 #define LIVE_TIME             100 // live image integration time (ms)
 #else
@@ -44,10 +44,10 @@ int main() {
 	QMIC_Status stat;
 	QMIC_AnalogAcq analog_acq;
 	float sw_ver, fw_ver;
+	uint32_t FLhist[256];
 #if SHOW_LIVE
 	uint32_t *image;
 #else
-	uint32_t FLhist[256];
 	uint32_t aval_events;
 	uint32_t *data_buf;
 #endif
@@ -126,11 +126,11 @@ int main() {
 	CHECK_ERR_EXIT(stat, "QMIC_Constr");
 
 	stat = QMIC_GetVersion(q, &sw_ver, &fw_ver, NULL, NULL); //< get sw & fw versions
-	CHECK_ERR_EXIT(stat, "QMIC_GetVersion");
+	CHECK_ERR_ESCAPE(stat, "QMIC_GetVersion");
 	printf("sw. ver: %4.2f - fw. ver: %4.2f\n", sw_ver, fw_ver);
 
 	stat = QMIC_GetAnalogAcq(q, &analog_acq); //< get some data from the telemetry sensors
-	CHECK_ERR_EXIT(stat, "QMIC_GetAnalogAcq");
+	CHECK_ERR_ESCAPE(stat, "QMIC_GetAnalogAcq");
 	printf("Sensor Temperature: %.1f*C\n", analog_acq.Tcarrier);
 
 	// === Load Default Configuration and Bad Pixels Map ===
@@ -178,8 +178,14 @@ int main() {
 		}
 
 		stat = QMIC_GetAnalogAcq(q, &analog_acq); //< get some data from the telemetry sensors
-		CHECK_ERR_EXIT(stat, "QMIC_GetAnalogAcq");
+		CHECK_ERR_ESCAPE(stat, "QMIC_GetAnalogAcq");
 		printf("Sensor Temperature: %.1f*C\n", analog_acq.Tcarrier);
+
+		stat = QMIC_GetFrameLenHistogram(q, FLhist, NULL);   //< get distribution of frame length of the
+		CHECK_ERR_ESCAPE(stat, "QMIC_GetFrameLenHistogram"); //  last 100 ms acquisition time
+
+		stat = QMIC_HelpPrintFrameLenStats(FLhist, NULL); //< display the frame length distribution stats
+		CHECK_ERR_ESCAPE(stat, "QMIC_HelpPrintFrameLenStats");
 	}
 #else
 	printf("Acquiring Data (press 'q' to abort)\n");
@@ -242,7 +248,7 @@ int main() {
 escape: //< jump to here on error after successful initialization. This allow to properly turn-off
 	    //  and deallocate the QMIC object
 	stat = QMIC_Stop(q); //< stop acquisition; no additional events will be put in the camera memory
-	CHECK_ERR_ESCAPE(stat, "QMIC_Stop");
+	CHECK_ERR_EXIT(stat, "QMIC_Stop");
 
 
 	// === Close and exit ===
